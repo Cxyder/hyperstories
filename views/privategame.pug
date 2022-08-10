@@ -1,0 +1,302 @@
+extends layout 
+
+block layout-content
+    body
+        .VerticalRow(id="mainGui")
+            .HorizontalRow(style="align:left; align-items: left; justify-items: left; width:100%")
+                image(src="vol2.png" id="audiotoggle" onclick="audiotogglefunction()" style="heigth: 50px; width: 50px")
+                h2(style="color:rgb(0, 162, 255); font-size:24px; width:12%; align-text:left") HyperStories!
+                h2
+                h2
+                h2
+                h2(style="color:rgb(0, 162, 255); font-size:24px; width:62%; align-text:right" id="playerscount") Players: 0/10
+            h2 
+            h2
+            .HorizontalRow(style="align:center; align-items: center; justify-items: center; width:100%")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder0")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder1") 
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder2") 
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder3")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder4")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder5")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder6")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder7")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder8")
+                h2(style="font-size:24px; color:rgb(0, 162, 255); display:none" id="placeholder9")
+            h2  
+            .HorizontalRow
+                h2(style="font-size:24px; color:white" id="instructions" width="60%") In attesa di giocatori
+                h2(style="font-size:24px; color:white; display:none" id="timer") 
+            h2 
+            h2
+            h2
+            .HorizontalRow
+                textarea(id="txt", cols="60", rows="10", style="background:#292929; color:white;" disabled) 
+        .VerticalRow(id="endGui" style="align:center; align-items: center; justify-items: center; width:100%; display:none")
+            h2(style="color:rgb(0, 162, 255); font-size:135%") HyperStories!
+            h2 
+            h2
+            .HorizontalRow
+                textarea(id="endstory", cols="40", rows="9", style="background:#292929; color:white; align-self: center;" disabled)
+            h2
+            .HorizontalRow
+                h2(style="display:none")
+                h2(style="display:none")
+                a(style="text-align:center" onclick="newround()" id="newroundbtn") Next Round [0/0]
+                    span 
+                    span 
+                    span 
+                    span
+    script.
+        //JQUERY IMPORTING
+        //const scriptSource = "https://code.jquery.com/jquery-3.5.0.js"
+
+        let l = window.location.href
+        let currentscreen = "play"
+
+        //All Sounds Switch
+        let audiostatus = 2
+        let soundswitch = true
+        let soundtrackplaying = false
+        let countdownplaying = false
+
+        //Soundtrack Global Var
+        let soundtrackvar
+
+        //Countdown Sound 
+        let timerclock = false
+        let timersound = new Audio("countdown30s.mp3")
+
+        //Turn Alert Sound
+        let audiobool = false
+        let audio = new Audio("alert.wav")
+        audio.volume = 0.25
+
+        
+        getPlayers()
+        setInterval(getPlayers, 1250)
+        let playercache3 = []
+        let playercache2 = []
+        let playercache1 = []
+        let cacheturn = 0
+        setInterval(infodispatch, 250)
+
+
+        //Audio Managment
+        function audiotogglefunction() {
+            if(audiostatus == 2) {
+                audiostatus--
+                soundtrackvar.volume = soundtrackvar.volume/4
+                document.getElementById("audiotoggle").src = "vol1.png"
+            } else if(audiostatus == 1) {
+                audiostatus--
+                soundtrackvar.volume = 0
+                document.getElementById("audiotoggle").src = "vol0.png"
+            } else if(audiostatus == 0) {
+                audiostatus = 2
+                soundtrackvar.volume = 0.04
+                document.getElementById("audiotoggle").src = "vol2.png"
+            }
+        }
+
+        async function getPlayers() { 
+            let res = await( await fetch(l.replace("privategame", "newjoin"))).text()
+            res = res.split(",")
+
+            //result caching
+            if(res.length > 1) {
+                if (cacheturn == 0) {
+                    playercache3 = res
+                    cacheturn++
+                } else if (cacheturn == 1) {
+                    playercache2 = res
+                    cacheturn++
+                } else if (cacheturn == 2) {
+                    playercache1 = res
+                    cacheturn = 0
+                }
+            }
+
+            //use cache if res may be invalid
+            if(res.length <= 1) {
+                if(playercache3.length > 1) {
+                    let temp = res
+                    res = playercache3
+                    playercache3 = temp
+                } else if(playercache2.length > 1) {
+                    let temp = res
+                    res = playercache2
+                    playercache2 = temp
+                } else if(playercache1.length > 1) {
+                    let temp = res
+                    res = playercache1
+                    playercache1 = temp
+                }
+            }
+
+            document.getElementById("playerscount").innerHTML = "Players: " + res.length + "/10"
+            for (let i = 0; i < 9; i++) {
+                document.getElementById("placeholder"+i).style.display = "none"
+            }
+            for (let i = 0; i < res.length; i++) {
+                let placeholdername = "placeholder"+i
+                document.getElementById("placeholder"+i).innerHTML = res[i].replaceAll("_"," ")
+                document.getElementById("placeholder"+i).innerHTML = document.getElementById("placeholder"+i).innerHTML.replaceAll('[', "")
+                document.getElementById("placeholder"+i).innerHTML = document.getElementById("placeholder"+i).innerHTML.replaceAll(']', "")
+                document.getElementById("placeholder"+i).innerHTML = document.getElementById("placeholder"+i).innerHTML.replaceAll('"', "")
+                document.getElementById("placeholder"+i).style.display = "block"
+            }
+        }
+
+        var textarea = document.getElementById("txt")
+        textarea.addEventListener("keypress", function(e) {
+            if (e.which == 13) {
+                e.preventDefault()
+                let link = l.replace("privategame?usr=#{username}", "submit?usr=#{username}&word=")
+                let words = document.getElementById("txt").value.split(" ")
+                let word = words.pop()
+
+                if(word == "" || word == " ") word = words.pop()
+                if(word == "" || word == " ") word = words.pop()
+                if(word == "" || word == " ") word = words.pop()
+                if(word == "" || word == " ") word = words.pop()
+                if(word == "" || word == " ") word = words.pop()
+
+                link = link + word
+
+                fetch(link)
+                document.getElementById("txt").disabled = false
+            }
+        })
+
+        async function newround() {
+            fetch(l.replace("privategame", "newroundrequest"))
+        }
+
+        async function infodispatch() {
+            let res = await(await fetch(l.replace("privategame", "infoDispatcher"))).json()
+            if(res.gameon == "play") {
+                //Show correct Gui
+                document.getElementById("mainGui").style.display = "block"
+                document.getElementById("endGui").style.display = "none"
+                currentscreen = "play"
+
+                //Display story so far
+                if (!document.getElementById("txt").value.includes(res.totalis)) {
+                    document.getElementById("txt").value = res.totalis
+                } 
+                
+                //Enable/Disable Input
+                
+                if (res.turnplayer == "#{username}") {
+                    document.getElementById("txt").disabled = false
+                    document.getElementById("instructions").innerHTML = "È il tuo turno!"
+                    if(!audiobool && soundswitch) {
+                        audiobool = true
+                        audio.play()
+                    }
+                } else {
+                    audiobool = false
+                    document.getElementById("txt").disabled = true
+                    document.getElementById("instructions").innerHTML = "È il tuo turno di "+res.turnplayer.replaceAll("_", " ")
+                }
+
+                //Show whos player turn is
+
+                for (let i = 0; i < 9; i++) {
+                    if (document.getElementById("placeholder"+i).innerHTML == res.turnplayer || document.getElementById("placeholder"+i).innerHTML.replaceAll(" ", "_") == res.turnplayer) {
+                        document.getElementById("placeholder"+i).style.color = "rgb(23, 209, 94)"
+                    } else {
+                        document.getElementById("placeholder"+i).style.color = "rgb(0, 162, 255)"
+                    }
+                }
+
+                //Show remaining seconds
+
+                document.getElementById("timer").style.display = "block"
+                document.getElementById("timer").innerHTML = res.gametimer + "s"
+                if (res.gametimer <= 30) {
+                    document.getElementById("timer").style.color = "rgb(253, 62, 62)"
+
+                    //Countdown sound
+                    if(soundswitch) {
+                        if (!countdownplaying) {
+                            countdownplaying = true
+                            if(res.gametimer == 30) {
+                                timersound.play()
+                                timersound.volume = 0.3
+                            } else {
+                                let difference = 30 - res.gametimer
+                                let timersound2 = new Audio("countdown30s.mp3#t="+difference)
+                                timersound2.volume = 0.3
+                                timersound2.play()
+                            }
+                            if(audiostatus == 2) soundtrackvar.volume = 0.02
+                            if(audiostatus == 1) soundtrackvar.volume = 0.005
+                        }
+                    }
+
+                } else document.getElementById("timer").style.color = "white"
+
+                if(soundswitch) {
+                    if(!soundtrackplaying && res.soundtrackid !== 0) {
+                        soundtrackplaying = true
+                        let name = "soundtrack"+res.soundtrackid+".mp3"
+                        soundtrackvar = new Audio(name)
+                        if(audiostatus == 2) soundtrackvar.volume = 0.04
+                        if(audiostatus == 1) soundtrackvar.volume = 0.01
+                        if(audiostatus == 0) soundtrackvar.volume = 0
+                        soundtrackvar.play()
+                    }
+                }
+
+            } else if (res.gameon == "end") {
+                if(currentscreen == "play") {
+                    try {
+                        soundtrackvar.pause()
+                        timersound.pause()
+                        timersound.currentTime = 0
+                    } catch(e) {}
+                    soundtrackplaying = false
+                    countdownplaying = false
+                    currentscreen = "end"
+                    document.getElementById("mainGui").style.display = "none"
+                    document.getElementById("endGui").style.display = "block"
+                    document.getElementById("endstory").value = res.totalis
+                    document.getElementById("newroundbtn").innerHTML = "Next Round [0/"+res.playercount+"]"
+                    document.getElementById("txt").value = ""
+
+                    //OUTRO
+                    let outroaudio
+                    let randomint = Math.floor(Math.random() * (4 - 1 + 1) + 1)
+                    if(randomint == 1) outroaudio = new Audio("OutroMale1.mp3")
+                    if(randomint == 2) outroaudio = new Audio("OutroMale2.mp3")
+                    if(randomint == 3) outroaudio = new Audio("OutroFemale1.mp3")
+                    if(randomint == 4) outroaudio = new Audio("OutroFemale2.mp3")
+                    try {
+                        outroaudio.play()
+                    } catch(e) {}
+
+                    //TTS
+                    setTimeout(() => {
+                        let synth = window.speechSynthesis
+                        voices = synth.getVoices()
+                        console.log(voices)
+                        const utterThis = new SpeechSynthesisUtterance(res.totalis)
+                        utterThis.voice = voices[0]
+                        utterThis.pitch = 1
+                        utterThis.rate = 1
+                        utterThis.language = "it-IT"
+                        synth.speak(utterThis)
+                    }, 3000)
+                }
+
+                document.getElementById("newroundbtn").innerHTML = "Next Round ["+res.nextroundclicks+"/"+res.playercount+"]"
+
+            }
+            
+        }
+        
+
+        
+        

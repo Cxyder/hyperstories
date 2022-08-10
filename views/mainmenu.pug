@@ -1,0 +1,44 @@
+extends layout 
+
+block layout-content
+    body
+        h2
+        .HorizontalAdjust
+            h2(class="pop-outin" id="text") HyperStories!
+            h2(class="pop-outin" style="font-size:0.5rem; margin-top:6px") BETA
+        h2
+        h2
+        h2
+        h2
+        .VerticalRow
+            input(type="text" class="form__input" placeholder="Username" id="username")
+            label(for="name" class="form__label" style="color:white" ) Username
+            h2
+            h2
+            a(style="width:100%; text-align:center" onclick="joiner()") Endless Mode
+                span 
+                span 
+                span 
+                span
+            .ar(style="width:100%; text-align:center" onclick="ejoiner()" id="btn") Mistery Mode
+                span 
+                span 
+                span 
+                span
+        h2
+        h2
+    
+    script.
+        function joiner() {
+            if(!document.getElementById("username").value) return
+            let location = window.location.href;  
+            let username = document.getElementById("username").value.replaceAll(" ", "_")
+            username = username.normalize('NFD').replace(/([\u0300-\u036f]|[^0-9a-zA-Z])/g, '');
+            location = location + "privategame?usr=" + username
+            window.location = location
+        }
+        function ejoiner() {
+            document.getElementById("btn").innerHTML = "Coming Soon!"
+        }
+
+        
